@@ -230,7 +230,7 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
 
 export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [state, dispatch] = useReducer(gameReducer, initialState);
-    const { user, token, updateUserBalance, updateUserStats } = useAuth();
+    const { user, updateUserBalance, updateUserStats } = useAuth();
 
     // Sync balance from user data when user changes (but not during active games)
     React.useEffect(() => {
@@ -254,8 +254,8 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, [state.gameStatus]);
 
     const handleGameResult = async () => {
-        if (!token || !user) {
-            console.log('handleGameResult: Missing token or user', { token: !!token, user: !!user });
+        if (!user) {
+            console.log('handleGameResult: Missing user', { user: !!user });
             return;
         }
 
@@ -294,11 +294,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     bet: state.bet,
                     playerScore,
                     dealerScore,
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
+                    username: user.username,
                 }
             );
 
@@ -364,17 +360,12 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const buyBalance = async (amount: number) => {
-        if (!token) return;
+        if (!user) return;
 
         try {
             const response = await axios.post(
                 `${process.env.REACT_APP_API_URL}/api/user/purchase-balance`,
-                { amount },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
+                { amount, username: user.username }
             );
 
             dispatch({ type: 'UPDATE_BALANCE', payload: response.data.newBalance });

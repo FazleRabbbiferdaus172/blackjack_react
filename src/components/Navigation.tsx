@@ -1,22 +1,39 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Navigation: React.FC = () => {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const location = useLocation();
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
 
-    const navItems = [
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setIsMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const menuItems = [
         { path: '/', label: 'Game', icon: '🎰' },
         { path: '/leaderboard', label: 'Leaderboard', icon: '🏆' },
+        { path: '/profile', label: 'Profile', icon: '👤' },
     ];
+
+    const navItems: { path: string; label: string; icon: string }[] = [];
 
     return (
         <nav className="bg-gradient-to-r from-black via-gray-900 to-black border-b-4 border-casino-gold shadow-2xl">
             <div className="max-w-7xl mx-auto px-6">
                 <div className="flex items-center justify-between h-20">
                     {/* Logo Section */}
-                    <div className="flex items-center gap-3">
+                    <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-300">
                         <div className="w-12 h-12 bg-gradient-to-br from-casino-gold to-yellow-400 rounded-full flex items-center justify-center shadow-lg">
                             <span className="text-2xl">🎰</span>
                         </div>
@@ -24,72 +41,80 @@ const Navigation: React.FC = () => {
                             <h1 className="text-casino-gold font-bold text-2xl tracking-wide">ROYAL CASINO</h1>
                             <p className="text-gray-400 text-sm">Premium Gaming Experience</p>
                         </div>
-                    </div>
-
-                    {/* Navigation Links */}
-                    <div className="flex items-center bg-black bg-opacity-50 rounded-full p-2 border border-casino-gold border-opacity-30">
-                        {navItems.map((item, index) => (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                className={`relative px-6 py-3 mx-1 rounded-full font-medium transition-all duration-300 group ${location.pathname === item.path
-                                    ? 'bg-casino-gold text-black shadow-lg transform scale-105'
-                                    : 'text-casino-gold hover:bg-casino-gold hover:bg-opacity-20 hover:transform hover:scale-105'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <span className="text-lg">{item.icon}</span>
-                                    <span className="font-semibold">{item.label}</span>
-                                </div>
-
-                                {/* Active indicator */}
-                                {location.pathname === item.path && (
-                                    <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-yellow-400 rounded-full"></div>
-                                )}
-
-                                {/* Hover glow effect */}
-                                <div className="absolute inset-0 rounded-full bg-casino-gold opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-                            </Link>
-                        ))}
-                    </div>
+                    </Link>
 
                     {/* User Profile Section */}
                     <div className="flex items-center gap-4">
-                        {/* User Stats */}
-                        <div className="text-right hidden md:block">
-                            <div className="text-casino-gold font-bold text-lg">{user?.username}</div>
-                            <div className="text-sm text-gray-400">
-                                <span className="text-green-400">{user?.wins}W</span>
-                                <span className="mx-1 text-gray-500">/</span>
-                                <span className="text-gray-300">{user?.gamesPlayed}G</span>
-                            </div>
+                        {/* Dropdown Menu */}
+                        <div className="relative" ref={menuRef}>
+                            {/* Menu Button */}
+                            <button
+                                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                className="flex items-center gap-2 bg-black bg-opacity-50 hover:bg-opacity-70 px-4 py-2 rounded-lg border border-casino-gold hover:border-yellow-300 transition-all duration-300 group"
+                            >
+                                <span className="text-casino-gold group-hover:text-yellow-300 transition-colors duration-300">☰</span>
+                                <span className="text-casino-gold font-medium group-hover:text-yellow-300 transition-colors duration-300 hidden sm:block">Menu</span>
+                                <span className={`text-casino-gold transition-transform duration-300 ${isMenuOpen ? 'rotate-180' : ''}`}>▼</span>
+                            </button>
+
+                            {/* Dropdown Menu */}
+                            {isMenuOpen && (
+                                <div className="absolute right-0 top-full mt-2 w-56 bg-black bg-opacity-95 backdrop-blur-sm rounded-lg border border-casino-gold shadow-2xl z-50">
+                                    <div className="py-2">
+                                        {/* User Info Header */}
+                                        <div className="px-4 py-3 border-b border-gray-700">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-gradient-to-br from-casino-gold to-yellow-400 rounded-full flex items-center justify-center">
+                                                    <span className="text-black font-bold">🎯</span>
+                                                </div>
+                                                <div>
+                                                    <div className="text-casino-gold font-bold">{user?.username}</div>
+                                                    <div className="text-xs text-gray-400">
+                                                        <span className="text-green-400">{user?.wins}W</span>
+                                                        <span className="mx-1">/</span>
+                                                        <span>{user?.gamesPlayed}G</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Menu Items */}
+                                        {menuItems.map((item) => (
+                                            <Link
+                                                key={item.path}
+                                                to={item.path}
+                                                onClick={() => setIsMenuOpen(false)}
+                                                className={`flex items-center gap-3 px-4 py-3 hover:bg-casino-gold hover:bg-opacity-20 transition-all duration-200 ${location.pathname === item.path
+                                                    ? 'bg-casino-gold bg-opacity-10 text-casino-gold border-r-2 border-casino-gold'
+                                                    : 'text-gray-300 hover:text-casino-gold'
+                                                    }`}
+                                            >
+                                                <span className="text-lg">{item.icon}</span>
+                                                <span className="font-medium">{item.label}</span>
+                                                {location.pathname === item.path && (
+                                                    <span className="ml-auto text-casino-gold">●</span>
+                                                )}
+                                            </Link>
+                                        ))}
+
+                                        {/* Divider */}
+                                        <div className="border-t border-gray-700 my-2"></div>
+
+                                        {/* Logout */}
+                                        <button
+                                            onClick={() => {
+                                                logout();
+                                                setIsMenuOpen(false);
+                                            }}
+                                            className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500 hover:bg-opacity-20 hover:text-red-300 transition-all duration-200"
+                                        >
+                                            <span className="text-lg">🚪</span>
+                                            <span className="font-medium">Logout</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-
-                        {/* Clickable User Avatar */}
-                        <Link to="/profile" className="relative group">
-                            <div className={`w-12 h-12 bg-gradient-to-br from-casino-gold to-yellow-400 rounded-full flex items-center justify-center shadow-lg border-2 transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl ${location.pathname === '/profile'
-                                ? 'border-yellow-300 ring-2 ring-casino-gold ring-opacity-50'
-                                : 'border-yellow-500 group-hover:border-yellow-300'
-                                }`}>
-                                <span className="text-black font-bold text-lg group-hover:scale-110 transition-transform duration-300">🎯</span>
-                            </div>
-
-                            {/* Online indicator */}
-                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-black group-hover:bg-green-400 transition-colors duration-300"></div>
-
-                            {/* Hover tooltip */}
-                            <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-90 text-casino-gold text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
-                                View Profile
-                            </div>
-                        </Link>
-
-                        {/* Mobile user info - also clickable */}
-                        <Link to="/profile" className="md:hidden group">
-                            <div className="text-casino-gold font-bold text-sm group-hover:text-yellow-300 transition-colors duration-300">{user?.username}</div>
-                            <div className="text-xs text-gray-400">
-                                {user?.wins}W / {user?.gamesPlayed}G
-                            </div>
-                        </Link>
                     </div>
                 </div>
             </div>

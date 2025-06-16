@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
 const Profile: React.FC = () => {
-    const { user, token, logout } = useAuth();
+    const { user, token, logout, updateUserBalance, updateUserProfile } = useAuth();
     const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'balance'>('profile');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
@@ -27,14 +27,20 @@ const Profile: React.FC = () => {
         setMessage('');
 
         try {
-            await axios.put(
+            const response = await axios.put(
                 `${process.env.REACT_APP_API_URL}/api/user/profile`,
                 { username: newUsername },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
+
+            // Update the user profile in AuthContext
+            updateUserProfile(newUsername);
+
             setMessage('Profile updated successfully!');
-        } catch (err) {
-            setError('Failed to update profile');
+        } catch (err: any) {
+            console.error('Profile update error:', err);
+            const errorMessage = err.response?.data?.message || 'Failed to update profile';
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -61,8 +67,10 @@ const Profile: React.FC = () => {
             setCurrentPassword('');
             setNewPassword('');
             setConfirmPassword('');
-        } catch (err) {
-            setError('Failed to change password');
+        } catch (err: any) {
+            console.error('Password change error:', err);
+            const errorMessage = err.response?.data?.message || 'Failed to change password';
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -75,14 +83,20 @@ const Profile: React.FC = () => {
         setMessage('');
 
         try {
-            await axios.post(
+            const response = await axios.post(
                 `${process.env.REACT_APP_API_URL}/api/user/purchase-balance`,
                 { amount: purchaseAmount },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            setMessage(`Successfully purchased $${purchaseAmount} balance!`);
-        } catch (err) {
-            setError('Failed to purchase balance');
+
+            // Update the user balance in AuthContext
+            updateUserBalance(response.data.newBalance);
+
+            setMessage(`Successfully purchased $${purchaseAmount} balance! New balance: $${response.data.newBalance}`);
+        } catch (err: any) {
+            console.error('Purchase balance error:', err);
+            const errorMessage = err.response?.data?.message || 'Failed to purchase balance';
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -97,50 +111,50 @@ const Profile: React.FC = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-800 to-green-900 p-4">
-            <div className="max-w-4xl mx-auto">
+        <div className="h-[calc(100vh-80px)] bg-gradient-to-br from-green-900 via-green-800 to-green-900 overflow-y-auto">
+            <div className="max-w-4xl mx-auto p-6">
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold text-casino-gold mb-2 drop-shadow-lg">
-                        🎯 PLAYER PROFILE 🎯
+                    <h1 className="text-3xl font-bold text-white mb-2">
+                        🎯 Player Profile
                     </h1>
-                    <div className="w-32 h-1 bg-casino-gold mx-auto rounded-full"></div>
+                    <div className="w-24 h-0.5 bg-casino-gold mx-auto rounded-full opacity-60"></div>
                 </div>
 
                 {/* User Info Card */}
-                <div className="bg-black bg-opacity-70 rounded-2xl p-6 mb-8 border-2 border-casino-gold">
+                <div className="bg-black bg-opacity-80 rounded-lg p-6 mb-6 border border-gray-600">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <div className="w-16 h-16 bg-gradient-to-br from-casino-gold to-yellow-400 rounded-full flex items-center justify-center text-2xl">
                                 🎰
                             </div>
                             <div>
-                                <h2 className="text-2xl font-bold text-white">{user?.username}</h2>
-                                <p className="text-casino-gold">Casino Member</p>
+                                <h2 className="text-xl font-bold text-white">{user?.username}</h2>
+                                <p className="text-gray-400 text-sm">Casino Member</p>
                             </div>
                         </div>
                         <div className="text-right">
-                            <div className="text-sm text-gray-300">Games Won</div>
-                            <div className="text-2xl font-bold text-casino-gold">{user?.wins}</div>
-                            <div className="text-sm text-gray-300">Total Games: {user?.gamesPlayed}</div>
+                            <div className="text-sm text-gray-400">Games Won</div>
+                            <div className="text-xl font-bold text-casino-gold">{user?.wins}</div>
+                            <div className="text-sm text-gray-400">Total Games: {user?.gamesPlayed}</div>
                         </div>
                     </div>
                 </div>
 
                 {/* Tab Navigation */}
-                <div className="bg-black bg-opacity-70 rounded-2xl border-2 border-casino-gold overflow-hidden">
-                    <div className="flex border-b border-casino-gold">
+                <div className="bg-black bg-opacity-80 rounded-lg border border-gray-600 overflow-hidden">
+                    <div className="flex border-b border-gray-700">
                         {[
-                            { id: 'profile', label: '👤 Profile', icon: '👤' },
-                            { id: 'password', label: '🔐 Password', icon: '🔐' },
-                            { id: 'balance', label: '💰 Balance', icon: '💰' },
+                            { id: 'profile', label: 'Profile', icon: '👤' },
+                            { id: 'password', label: 'Password', icon: '🔐' },
+                            { id: 'balance', label: 'Balance', icon: '💰' },
                         ].map((tab) => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as any)}
-                                className={`flex-1 py-4 px-6 font-bold transition-all duration-200 ${activeTab === tab.id
-                                        ? 'bg-casino-gold text-black'
-                                        : 'text-casino-gold hover:bg-casino-gold hover:bg-opacity-20'
+                                className={`flex-1 py-3 px-4 font-medium transition-all duration-200 ${activeTab === tab.id
+                                    ? 'bg-black bg-opacity-60 text-casino-gold border-b-2 border-casino-gold'
+                                    : 'text-gray-300 hover:bg-black hover:bg-opacity-40 hover:text-white'
                                     }`}
                             >
                                 <span className="mr-2">{tab.icon}</span>
@@ -149,18 +163,18 @@ const Profile: React.FC = () => {
                         ))}
                     </div>
 
-                    <div className="p-8">
+                    <div className="p-6">
                         {/* Messages */}
                         {message && (
-                            <div className="bg-green-900 bg-opacity-70 border-2 border-green-500 text-green-300 px-4 py-3 rounded-lg mb-6 text-center">
-                                <span className="text-xl mr-2">✅</span>
+                            <div className="bg-green-900 bg-opacity-50 border border-green-600 text-green-300 px-4 py-3 rounded-lg mb-6 text-center">
+                                <span className="text-lg mr-2">✅</span>
                                 {message}
                             </div>
                         )}
 
                         {error && (
-                            <div className="bg-red-900 bg-opacity-70 border-2 border-red-500 text-red-300 px-4 py-3 rounded-lg mb-6 text-center">
-                                <span className="text-xl mr-2">⚠️</span>
+                            <div className="bg-red-900 bg-opacity-50 border border-red-600 text-red-300 px-4 py-3 rounded-lg mb-6 text-center">
+                                <span className="text-lg mr-2">⚠️</span>
                                 {error}
                             </div>
                         )}
@@ -169,14 +183,14 @@ const Profile: React.FC = () => {
                         {activeTab === 'profile' && (
                             <form onSubmit={handleUpdateProfile} className="space-y-6">
                                 <div>
-                                    <label className="block text-casino-gold text-sm font-bold mb-2">
-                                        🎯 Username
+                                    <label className="block text-gray-300 text-sm font-medium mb-2">
+                                        Username
                                     </label>
                                     <input
                                         type="text"
                                         value={newUsername}
                                         onChange={(e) => setNewUsername(e.target.value)}
-                                        className="w-full px-4 py-3 bg-gray-900 border-2 border-casino-gold rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 text-white font-medium"
+                                        className="w-full px-4 py-3 bg-black bg-opacity-60 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-transparent text-white"
                                         required
                                     />
                                 </div>
@@ -184,9 +198,9 @@ const Profile: React.FC = () => {
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full bg-gradient-to-r from-casino-gold to-yellow-400 text-black font-bold py-4 px-6 rounded-full hover:from-yellow-400 hover:to-casino-gold transition-all duration-300 transform hover:scale-105 shadow-lg border-2 border-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                                    className="w-full bg-casino-gold hover:bg-yellow-500 text-black font-medium py-3 px-6 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {loading ? '⏳ Updating...' : '💾 Update Profile'}
+                                    {loading ? 'Updating...' : 'Update Profile'}
                                 </button>
                             </form>
                         )}
@@ -195,40 +209,40 @@ const Profile: React.FC = () => {
                         {activeTab === 'password' && (
                             <form onSubmit={handleChangePassword} className="space-y-6">
                                 <div>
-                                    <label className="block text-casino-gold text-sm font-bold mb-2">
-                                        🔒 Current Password
+                                    <label className="block text-gray-300 text-sm font-medium mb-2">
+                                        Current Password
                                     </label>
                                     <input
                                         type="password"
                                         value={currentPassword}
                                         onChange={(e) => setCurrentPassword(e.target.value)}
-                                        className="w-full px-4 py-3 bg-gray-900 border-2 border-casino-gold rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 text-white font-medium"
+                                        className="w-full px-4 py-3 bg-black bg-opacity-60 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-transparent text-white"
                                         required
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-casino-gold text-sm font-bold mb-2">
-                                        🆕 New Password
+                                    <label className="block text-gray-300 text-sm font-medium mb-2">
+                                        New Password
                                     </label>
                                     <input
                                         type="password"
                                         value={newPassword}
                                         onChange={(e) => setNewPassword(e.target.value)}
-                                        className="w-full px-4 py-3 bg-gray-900 border-2 border-casino-gold rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 text-white font-medium"
+                                        className="w-full px-4 py-3 bg-black bg-opacity-60 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-transparent text-white"
                                         required
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-casino-gold text-sm font-bold mb-2">
-                                        ✅ Confirm New Password
+                                    <label className="block text-gray-300 text-sm font-medium mb-2">
+                                        Confirm New Password
                                     </label>
                                     <input
                                         type="password"
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
-                                        className="w-full px-4 py-3 bg-gray-900 border-2 border-casino-gold rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 text-white font-medium"
+                                        className="w-full px-4 py-3 bg-black bg-opacity-60 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-casino-gold focus:border-transparent text-white"
                                         required
                                     />
                                 </div>
@@ -236,9 +250,9 @@ const Profile: React.FC = () => {
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full bg-gradient-to-r from-casino-gold to-yellow-400 text-black font-bold py-4 px-6 rounded-full hover:from-yellow-400 hover:to-casino-gold transition-all duration-300 transform hover:scale-105 shadow-lg border-2 border-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                                    className="w-full bg-casino-gold hover:bg-yellow-500 text-black font-medium py-3 px-6 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {loading ? '⏳ Changing...' : '🔐 Change Password'}
+                                    {loading ? 'Changing...' : 'Change Password'}
                                 </button>
                             </form>
                         )}
@@ -247,64 +261,64 @@ const Profile: React.FC = () => {
                         {activeTab === 'balance' && (
                             <div className="space-y-6">
                                 <div className="text-center">
-                                    <h3 className="text-2xl font-bold text-casino-gold mb-4">
-                                        💰 Purchase Casino Balance 💰
+                                    <h3 className="text-xl font-bold text-white mb-2">
+                                        Purchase Casino Balance
                                     </h3>
-                                    <p className="text-white opacity-80">
+                                    <p className="text-gray-400 text-sm">
                                         Add funds to your casino account to continue playing
                                     </p>
                                 </div>
 
                                 <form onSubmit={handlePurchaseBalance} className="space-y-6">
                                     <div>
-                                        <label className="block text-casino-gold text-sm font-bold mb-4">
+                                        <label className="block text-gray-300 text-sm font-medium mb-4">
                                             Select Amount
                                         </label>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                             {balanceOptions.map((option) => (
                                                 <button
                                                     key={option.value}
                                                     type="button"
                                                     onClick={() => setPurchaseAmount(option.value)}
-                                                    className={`relative p-4 rounded-xl border-2 transition-all duration-200 ${purchaseAmount === option.value
-                                                            ? 'border-casino-gold bg-casino-gold bg-opacity-20 text-casino-gold'
-                                                            : 'border-gray-600 bg-gray-800 text-white hover:border-casino-gold'
+                                                    className={`relative p-4 rounded-lg border transition-all duration-200 ${purchaseAmount === option.value
+                                                        ? 'border-casino-gold bg-casino-gold bg-opacity-10 text-casino-gold'
+                                                        : 'border-gray-600 bg-black bg-opacity-60 text-gray-300 hover:border-gray-500 hover:text-white'
                                                         }`}
                                                 >
                                                     {option.popular && (
-                                                        <div className="absolute -top-2 -right-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full">
+                                                        <div className="absolute -top-2 -right-2 bg-casino-gold text-black text-xs px-2 py-1 rounded-full font-medium">
                                                             Popular
                                                         </div>
                                                     )}
-                                                    <div className="text-2xl font-bold">{option.label}</div>
+                                                    <div className="text-lg font-bold">{option.label}</div>
                                                 </button>
                                             ))}
                                         </div>
                                     </div>
 
-                                    <div className="bg-gray-800 rounded-lg p-4 border border-casino-gold">
-                                        <div className="flex justify-between items-center text-white">
-                                            <span>Amount:</span>
-                                            <span className="text-casino-gold font-bold text-xl">${purchaseAmount}</span>
+                                    <div className="bg-black bg-opacity-60 rounded-lg p-4 border border-gray-600">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-300">Amount:</span>
+                                            <span className="text-casino-gold font-bold text-lg">${purchaseAmount}</span>
                                         </div>
                                     </div>
 
                                     <button
                                         type="submit"
                                         disabled={loading}
-                                        className="w-full bg-gradient-to-r from-green-600 to-green-500 text-white font-bold py-4 px-6 rounded-full hover:from-green-500 hover:to-green-400 transition-all duration-300 transform hover:scale-105 shadow-lg border-2 border-green-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                                        className="w-full bg-green-600 hover:bg-green-500 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        {loading ? '⏳ Processing...' : `💳 Purchase $${purchaseAmount}`}
+                                        {loading ? 'Processing...' : `Purchase $${purchaseAmount}`}
                                     </button>
                                 </form>
                             </div>
                         )}
 
                         {/* Logout Button */}
-                        <div className="mt-8 pt-6 border-t border-casino-gold">
+                        <div className="mt-8 pt-6 border-t border-gray-700">
                             <button
                                 onClick={logout}
-                                className="w-full bg-gradient-to-r from-red-600 to-red-500 text-white font-bold py-3 px-6 rounded-full hover:from-red-500 hover:to-red-400 transition-all duration-300 transform hover:scale-105 shadow-lg border-2 border-red-700"
+                                className="w-full bg-black bg-opacity-60 hover:bg-red-600 text-gray-300 hover:text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 border border-gray-600"
                             >
                                 🚪 Logout
                             </button>

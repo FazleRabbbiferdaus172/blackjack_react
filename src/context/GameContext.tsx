@@ -107,6 +107,11 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
         }
 
         case 'GAME_RESULT': {
+            console.log('GameReducer: GAME_RESULT action', {
+                result: action.payload.result,
+                newBalance: action.payload.newBalance,
+                currentBalance: state.balance
+            });
             return {
                 ...state,
                 gameStatus: 'finished',
@@ -225,24 +230,41 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
 
 export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [state, dispatch] = useReducer(gameReducer, initialState);
-    const { user, token, updateUserBalance } = useAuth();
+    const { user, token, updateUserBalance, updateUserStats } = useAuth();
 
-    // Sync balance from user data when user changes
+    // Sync balance from user data when user changes (but not during active games)
     React.useEffect(() => {
-        if (user && user.balance !== undefined) {
+        if (user && user.balance !== undefined && state.gameStatus === 'betting') {
+            console.log('GameContext: Syncing balance from user', {
+                userBalance: user.balance,
+                currentGameBalance: state.balance,
+                gameStatus: state.gameStatus
+            });
             dispatch({ type: 'UPDATE_BALANCE', payload: user.balance });
         }
-    }, [user]);
+    }, [user, state.gameStatus]);
 
     // Handle game result when dealer turn is finished
     React.useEffect(() => {
+        console.log('GameContext: Game status changed to', state.gameStatus);
         if (state.gameStatus === 'dealer-turn') {
+            console.log('GameContext: Triggering handleGameResult');
             handleGameResult();
         }
     }, [state.gameStatus]);
 
     const handleGameResult = async () => {
-        if (!token || !user) return;
+        if (!token || !user) {
+            console.log('handleGameResult: Missing token or user', { token: !!token, user: !!user });
+            return;
+        }
+
+        console.log('handleGameResult: Starting game result calculation', {
+            playerScore: state.player.score,
+            dealerScore: state.dealer.score,
+            bet: state.bet,
+            currentBalance: state.balance
+        });
 
         try {
             const playerScore = state.player.score;
@@ -262,6 +284,8 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 result = 'push';
             }
 
+            console.log('handleGameResult: Game result determined', { result });
+
             // Send result to backend
             const response = await axios.post(
                 `${process.env.REACT_APP_API_URL}/api/games/result`,
@@ -278,6 +302,8 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 }
             );
 
+            console.log('handleGameResult: Backend response received', response.data);
+
             // Update local state with new balance from backend
             dispatch({
                 type: 'GAME_RESULT',
@@ -287,11 +313,18 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 },
             });
 
-            // Update user balance in AuthContext
+            // Update user balance and stats in AuthContext
             updateUserBalance(response.data.newBalance);
+            updateUserStats(response.data.wins, response.data.gamesPlayed);
+
+            console.log('handleGameResult: Updated balance and stats', {
+                newBalance: response.data.newBalance,
+                wins: response.data.wins,
+                gamesPlayed: response.data.gamesPlayed
+            });
 
         } catch (error) {
-            console.error('Failed to record game result:', error);
+            console.error('handleGameResult: Failed to record game result:', error);
             // Fallback to local calculation if backend fails
             const playerScore = state.player.score;
             const dealerScore = state.dealer.score;
@@ -314,6 +347,12 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 result = 'push';
             }
 
+            console.log('handleGameResult: Using fallback calculation', {
+                result,
+                oldBalance: state.balance,
+                newBalance: Math.max(0, newBalance)
+            });
+
             dispatch({
                 type: 'GAME_RESULT',
                 payload: {
@@ -329,7 +368,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         try {
             const response = await axios.post(
-                `${process.env.REACT_APP_API_URL}/api/user/buy-balance`,
+                `${process.env.REACT_APP_API_URL}/api/user/purchase-balance`,
                 { amount },
                 {
                     headers: {

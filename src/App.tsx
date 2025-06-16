@@ -18,14 +18,21 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      {isAuthenticated && <Navigation />}
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route
+          path="/login"
+          element={
+            isAuthenticated ? <Navigate to="/" replace /> : <Login />
+          }
+        />
         <Route
           path="/"
           element={
             <PrivateRoute>
-              <Game />
+              <>
+                <Navigation />
+                <Game />
+              </>
             </PrivateRoute>
           }
         />
@@ -33,7 +40,10 @@ const AppContent: React.FC = () => {
           path="/leaderboard"
           element={
             <PrivateRoute>
-              <Leaderboard />
+              <>
+                <Navigation />
+                <Leaderboard />
+              </>
             </PrivateRoute>
           }
         />
@@ -41,7 +51,10 @@ const AppContent: React.FC = () => {
           path="/profile"
           element={
             <PrivateRoute>
-              <Profile />
+              <>
+                <Navigation />
+                <Profile />
+              </>
             </PrivateRoute>
           }
         />

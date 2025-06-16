@@ -9,8 +9,8 @@ interface CardProps {
 const Card: React.FC<CardProps> = ({ card, hidden }) => {
     if (hidden) {
         return (
-            <div className="w-28 h-40 bg-gradient-to-br from-blue-900 to-blue-800 rounded-xl shadow-2xl border-2 border-blue-700 flex items-center justify-center transform hover:scale-105 transition-transform duration-200">
-                <div className="w-20 h-32 bg-gradient-to-br from-red-800 to-red-900 rounded-lg flex items-center justify-center">
+            <div className="w-32 h-44 bg-gradient-to-br from-blue-900 to-blue-800 rounded-xl shadow-2xl border-2 border-blue-700 flex items-center justify-center transform hover:scale-105 transition-transform duration-200">
+                <div className="w-24 h-36 bg-gradient-to-br from-red-800 to-red-900 rounded-lg flex items-center justify-center">
                     <div className="text-white text-2xl font-bold opacity-80">🂠</div>
                 </div>
             </div>
@@ -44,7 +44,7 @@ const Card: React.FC<CardProps> = ({ card, hidden }) => {
     };
 
     return (
-        <div className={`w-28 h-40 ${getCardBackground(card.suit)} rounded-xl shadow-2xl border-2 p-3 relative transform hover:scale-105 transition-all duration-200 hover:shadow-3xl`}>
+        <div className={`w-32 h-44 ${getCardBackground(card.suit)} rounded-xl shadow-2xl border-2 p-3 relative transform hover:scale-105 transition-all duration-200 hover:shadow-3xl`}>
             {/* Top left corner */}
             <div className={`absolute top-2 left-2 text-center ${getSuitColor(card.suit)}`}>
                 <div className="text-lg font-bold leading-none">{card.face}</div>

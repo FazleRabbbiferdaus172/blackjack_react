@@ -1,26 +1,68 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const Login: React.FC = () => {
     const [isLogin, setIsLogin] = useState(true);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const { login, register } = useAuth();
+    const navigate = useNavigate();
+
+    const validateForm = () => {
+        if (!username.trim()) {
+            setError('Username is required');
+            return false;
+        }
+        if (username.length < 3) {
+            setError('Username must be at least 3 characters');
+            return false;
+        }
+        if (!password) {
+            setError('Password is required');
+            return false;
+        }
+        if (password.length < 4) {
+            setError('Password must be at least 4 characters');
+            return false;
+        }
+        return true;
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
+        if (!validateForm()) {
+            return;
+        }
+
+        setLoading(true);
+
         try {
             if (isLogin) {
-                await login(username, password);
+                await login(username.trim(), password);
             } else {
-                await register(username, password);
+                await register(username.trim(), password);
             }
-        } catch (err) {
-            setError(isLogin ? 'Login failed' : 'Registration failed');
+            // Successful login/register will trigger navigation via AuthContext
+            navigate('/');
+        } catch (err: any) {
+            console.error('Auth error:', err);
+            // Use the specific error message from the backend
+            setError(err.message || (isLogin ? 'Login failed' : 'Registration failed'));
+        } finally {
+            setLoading(false);
         }
+    };
+
+    const switchMode = () => {
+        setIsLogin(!isLogin);
+        setError('');
+        setUsername('');
+        setPassword('');
     };
 
     return (
@@ -58,8 +100,9 @@ const Login: React.FC = () => {
                             type="text"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            className="w-full px-4 py-3 bg-gray-900 border-2 border-casino-gold rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 text-white font-medium"
-                            placeholder="Enter your username"
+                            disabled={loading}
+                            className="w-full px-4 py-3 bg-gray-900 border-2 border-casino-gold rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                            placeholder="Enter your username (min 3 characters)"
                             required
                         />
                     </div>
@@ -72,28 +115,34 @@ const Login: React.FC = () => {
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-4 py-3 bg-gray-900 border-2 border-casino-gold rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 text-white font-medium"
-                            placeholder="Enter your password"
+                            disabled={loading}
+                            className="w-full px-4 py-3 bg-gray-900 border-2 border-casino-gold rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                            placeholder="Enter your password (min 4 characters)"
                             required
                         />
                     </div>
 
                     <button
                         type="submit"
-                        className="w-full bg-gradient-to-r from-casino-gold to-yellow-400 text-black font-bold py-4 px-6 rounded-full hover:from-yellow-400 hover:to-casino-gold transition-all duration-300 transform hover:scale-105 shadow-lg border-2 border-yellow-600"
+                        disabled={loading}
+                        className="w-full bg-gradient-to-r from-casino-gold to-yellow-400 text-black font-bold py-4 px-6 rounded-full hover:from-yellow-400 hover:to-casino-gold transition-all duration-300 transform hover:scale-105 shadow-lg border-2 border-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                     >
                         <span className="text-xl mr-2">
-                            {isLogin ? '🎲' : '🎰'}
+                            {loading ? '⏳' : (isLogin ? '🎲' : '🎰')}
                         </span>
-                        {isLogin ? 'ENTER CASINO' : 'JOIN CASINO'}
+                        {loading
+                            ? (isLogin ? 'ENTERING CASINO...' : 'JOINING CASINO...')
+                            : (isLogin ? 'ENTER CASINO' : 'JOIN CASINO')
+                        }
                     </button>
                 </form>
 
                 <div className="mt-6 text-center">
                     <div className="w-full h-px bg-casino-gold opacity-30 mb-4"></div>
                     <button
-                        onClick={() => setIsLogin(!isLogin)}
-                        className="text-casino-gold hover:text-yellow-400 transition-colors duration-200 font-medium"
+                        onClick={switchMode}
+                        disabled={loading}
+                        className="text-casino-gold hover:text-yellow-400 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isLogin
                             ? "🆕 New player? Create account"

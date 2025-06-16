@@ -135,7 +135,7 @@ const Profile: React.FC = () => {
                         </div>
                         <div className="text-right">
                             <div className="text-sm text-gray-400">Games Won</div>
-                            <div className="text-xl font-bold text-casino-gold">{user?.wins}</div>
+                            <div className="text-xl font-bold text-casino-gold">{user?.gamesWon}</div>
                             <div className="text-sm text-gray-400">Total Games: {user?.gamesPlayed}</div>
                         </div>
                     </div>

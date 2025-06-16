@@ -60,7 +60,7 @@ const Game: React.FC = () => {
                             </div>
                             <div className="bg-black bg-opacity-50 px-4 py-2 rounded-lg border border-casino-gold">
                                 <span className="text-sm text-gray-300 block">Games Won</span>
-                                <div className="text-2xl font-bold text-green-400">{user?.wins}</div>
+                                <div className="text-2xl font-bold text-green-400">{user?.gamesWon}</div>
                             </div>
                             <div className="bg-black bg-opacity-50 px-4 py-2 rounded-lg border border-casino-gold">
                                 <span className="text-sm text-gray-300 block">Total Games</span>

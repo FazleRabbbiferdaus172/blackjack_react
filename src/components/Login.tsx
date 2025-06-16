@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -8,8 +8,16 @@ const Login: React.FC = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const { login, register } = useAuth();
+    const { login, register, isAuthenticated } = useAuth();
     const navigate = useNavigate();
+
+    // Navigate to home when user becomes authenticated
+    useEffect(() => {
+        if (isAuthenticated) {
+            console.log('User authenticated, navigating to home');
+            navigate('/');
+        }
+    }, [isAuthenticated, navigate]);
 
     const validateForm = () => {
         if (!username.trim()) {
@@ -47,8 +55,7 @@ const Login: React.FC = () => {
             } else {
                 await register(username.trim(), password);
             }
-            // Successful login/register will trigger navigation via AuthContext
-            navigate('/');
+            // Navigation will happen automatically via useEffect when isAuthenticated becomes true
         } catch (err: any) {
             console.error('Auth error:', err);
             // Use the specific error message from the backend

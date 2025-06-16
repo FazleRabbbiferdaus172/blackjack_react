@@ -70,7 +70,7 @@ const Navigation: React.FC = () => {
                                                 <div>
                                                     <div className="text-casino-gold font-bold">{user?.username}</div>
                                                     <div className="text-xs text-gray-400">
-                                                        <span className="text-green-400">{user?.wins}W</span>
+                                                        <span className="text-green-400">{user?.gamesWon}W</span>
                                                         <span className="mx-1">/</span>
                                                         <span>{user?.gamesPlayed}G</span>
                                                     </div>

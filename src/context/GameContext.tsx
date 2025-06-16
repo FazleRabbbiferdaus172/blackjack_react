@@ -315,11 +315,11 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             // Update user balance and stats in AuthContext
             updateUserBalance(response.data.newBalance);
-            updateUserStats(response.data.wins, response.data.gamesPlayed);
+            updateUserStats(response.data.gamesWon, response.data.gamesPlayed);
 
             console.log('handleGameResult: Updated balance and stats', {
                 newBalance: response.data.newBalance,
-                wins: response.data.wins,
+                gamesWon: response.data.gamesWon,
                 gamesPlayed: response.data.gamesPlayed
             });
 

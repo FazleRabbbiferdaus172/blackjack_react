@@ -25,12 +25,16 @@ export interface GameState {
 export interface User {
     id: string;
     username: string;
-    wins: number;
+    gamesWon: number;
     gamesPlayed: number;
     balance: number;
 }
 
 export interface AuthResponse {
-    token: string;
+    tokens: {
+        accessToken: string;
+        idToken: string;
+        refreshToken: string;
+    };
     user: User;
 } 

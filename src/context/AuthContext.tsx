@@ -9,7 +9,7 @@ interface AuthContextType {
     register: (username: string, password: string) => Promise<void>;
     logout: () => void;
     updateUserBalance: (newBalance: number) => void;
-    updateUserStats: (wins: number, gamesPlayed: number) => void;
+    updateUserStats: (gamesWon: number, gamesPlayed: number) => void;
     updateUserProfile: (username: string) => void;
     isAuthenticated: boolean;
     isLoading: boolean;
@@ -35,7 +35,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             );
 
             console.log('Login successful:', response.data);
-            const { token, user } = response.data;
+            const { tokens, user } = response.data;
+            const token = tokens.accessToken;
 
             setToken(token);
             setUser(user);
@@ -50,20 +51,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const register = async (username: string, password: string) => {
         try {
-            const url = `${process.env.REACT_APP_API_URL}/api/auth/register`;
-            console.log('Registering user:', { username, url });
+            const registerUrl = `${process.env.REACT_APP_API_URL}/api/auth/register`;
+            // Generate a default email based on username
+            const email = `${username}@blackjack.example.com`;
+            console.log('Registering user:', { username, email, registerUrl });
 
-            const response = await axios.post<AuthResponse>(
-                url,
-                { username, password }
+            const registerResponse = await axios.post(
+                registerUrl,
+                { username, password, email }
             );
 
-            console.log('Registration successful:', response.data);
-            const { token, user } = response.data;
-            setToken(token);
-            setUser(user);
-            localStorage.setItem('token', token);
-            localStorage.setItem('user', JSON.stringify(user));
+            console.log('Registration successful:', registerResponse.data);
+
+            // After successful registration, automatically log the user in
+            await login(username, password);
         } catch (error: any) {
             console.error('Registration error:', error.response?.data || error.message);
             const errorMessage = error.response?.data?.message || error.response?.statusText || 'Registration failed';
@@ -101,24 +102,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    const updateUserStats = (wins: number, gamesPlayed: number) => {
+    const updateUserStats = (gamesWon: number, gamesPlayed: number) => {
         console.log('AuthContext: updateUserStats called', {
-            currentWins: user?.wins,
+            currentGamesWon: user?.gamesWon,
             currentGamesPlayed: user?.gamesPlayed,
             currentBalance: user?.balance,
-            newWins: wins,
+            newGamesWon: gamesWon,
             newGamesPlayed: gamesPlayed
         });
         if (user) {
             // Use the most current user state to preserve any recent balance updates
             setUser(currentUser => {
                 if (!currentUser) return null;
-                const updatedUser = { ...currentUser, wins: wins, gamesPlayed: gamesPlayed };
+                const updatedUser = { ...currentUser, gamesWon: gamesWon, gamesPlayed: gamesPlayed };
                 localStorage.setItem('user', JSON.stringify(updatedUser));
                 console.log('AuthContext: User stats updated', {
                     username: updatedUser.username,
                     balance: updatedUser.balance,
-                    wins: updatedUser.wins,
+                    gamesWon: updatedUser.gamesWon,
                     gamesPlayed: updatedUser.gamesPlayed
                 });
                 return updatedUser;
@@ -139,7 +140,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.log('AuthContext: User object changed', {
             username: user?.username,
             balance: user?.balance,
-            wins: user?.wins,
+            gamesWon: user?.gamesWon,
             gamesPlayed: user?.gamesPlayed
         });
     }, [user]);

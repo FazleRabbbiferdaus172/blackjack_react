@@ -3,7 +3,7 @@ import axios from 'axios';
 
 interface LeaderboardEntry {
     username: string;
-    wins: number;
+    gamesWon: number;
     gamesPlayed: number;
     winRate: number;
 }
@@ -169,7 +169,7 @@ const Leaderboard: React.FC = () => {
                                             </div>
                                             <div className={`font-bold text-xl ${index < 3 ? 'text-black' : 'text-green-400'
                                                 }`}>
-                                                {player.wins}
+                                                {player.gamesWon}
                                             </div>
                                         </div>
                                         <div>
@@ -216,7 +216,7 @@ const Leaderboard: React.FC = () => {
                                 <div>
                                     <span className="text-gray-400">Total Wins: </span>
                                     <span className="text-green-400 font-bold">
-                                        {leaderboard.reduce((sum, player) => sum + player.wins, 0)}
+                                        {leaderboard.reduce((sum, player) => sum + player.gamesWon, 0)}
                                     </span>
                                 </div>
                             </div>
